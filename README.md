@@ -163,7 +163,7 @@ def search_restaurants(city: str) -> list
 ### ✅ PASS (9개)
 
 #### #1️⃣ 사용법 및 입력 검증
-- **근거**: README.md > `python travel_planner.py --date "YYYY-MM-DD"`
+- **근 거**: README.md > `python travel_planner.py --date "YYYY-MM-DD"`
 - **잘한 점**: 사용법과 날짜 포맷 예시를 명확히 제시
 - **부족한 점**: 추가적인 입력 검증 로직(범위 체크) 설명 부족
 - **보완**: ✅ 사용 예시 옆에 허용 범위나 에러 메시지 예시 추가 완료
@@ -180,7 +180,7 @@ python travel_planner.py --date "2025-13-45"
 ---
 
 #### #2️⃣ LLM 출력 JSON 스키마
-- **근거**: README.md > `"recommended_city": "제주"`
+- **근 거**: README.md > `"recommended_city": "제주"`
 - **잘한 점**: JSON에 추천도시/날씨/행사/이유 키 예시 포함
 - **부족한 점**: 스키마의 필수성·타입을 명시적 검증 예시로 연결 부족
 - **보완**: ✅ 스키마의 필수 키 목록 명시 완료
@@ -198,7 +198,7 @@ python travel_planner.py --date "2025-13-45"
 ---
 
 #### #4️⃣ 결과 저장 및 파일 관리
-- **근거**: README.md > `results/ 폴더에 JSON + Markdown 파일 자동 저장`
+- **근 거**: README.md > `results/ 폴더에 JSON + Markdown 파일 자동 저장`
 - **잘한 점**: results/ 폴더와 JSON/Markdown 저장 산출물 예시 제시
 - **부족한 점**: 저장 형식(파일명 규칙/버전·덮어쓰기 정책) 상세 부족
 - **보완**: ✅ 파일명 규칙과 재실행 정책 보강 완료
@@ -217,7 +217,7 @@ travel_report_YYYYMMDD_HHMMSS.md
 ---
 
 #### #10️⃣ HTTP 메서드 설계
-- **근거**: README.md > `HTTP 메서드: GET (조회), POST (생성)의 차이`
+- **근 거**: README.md > `HTTP 메서드: GET (조회), POST (생성)의 차이`
 - **잘한 점**: GET/POST 용도와 차이를 명확히 설명
 - **부족한 점**: 각 API 호출에서 실제 어떤 엔드포인트에 GET/POST를 쓰는지 구체 매핑 부족
 - **보완**: ✅ 핵심 엔드포인트별 권장 메서드와 이유 명시 완료
@@ -231,7 +231,7 @@ travel_report_YYYYMMDD_HHMMSS.md
 ---
 
 #### #1️⃣1️⃣ LLM 구조화 출력
-- **근거**: README.md > `구조화된 출력: LLM 결과를 JSON으로 파싱`
+- **근 거**: README.md > `구조화된 출력: LLM 결과를 JSON으로 파싱`
 - **잘한 점**: LLM의 JSON 강제를 통한 후처리·구조화 장점 명확히 설명
 - **부족한 점**: JSON 강제의 예시 프롬프트·포맷 샘플 부족
 - **보완**: ✅ 프롬프트 예시(LLM에 JSON을 강제하는 샘플) 추가 완료
@@ -257,8 +257,8 @@ JSON만 응답하고 다른 텍스트는 포함하지 마세요.
 ---
 
 #### #1️⃣2️⃣ API 에러 처리 및 디버깅
-- **근거**: README.md > `Kakao API 인증 실패 (401/403)`
-- **잘한 점**: 401/403 원인과 기본 디버깅(키 오류) 안내 포함
+- **근 거**: README.md > `Kakao API 인증 실패 (401/403)`
+- **잘한 점**:  401/403 원인과 기본 디버깅(키 오류) 안내 포함
 - **부족한 점**: 쿼터/네트워크 원인과 헤더·설정 점검 절차 구체화 필요
 - **보완**: ✅ 쿼터·네트워크·헤더 점검 체크리스트 보완 완료
 
