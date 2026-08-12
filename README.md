@@ -1,282 +1,231 @@
-# 🌍 AI 기반 국내 여행 추천 프로그램
+📚 Travel Planner - REST API 여행 추천 프로그램
+📖 목차
+프로젝트 개요
+주요 기능
+설치 및 실행
+사용 방법
+API 설계
+평가 항목 및 구현 현황
+디버깅 가이드
+프로젝트 구조
+🎯 프로젝트 개요
+Travel Planner는 사용자의 여행 날짜를 입력받아 Gemini LLM으로 추천 도시를 생성하고, Kakao Local API로 맛집을 검색한 후, 최종 여행 리포트를 JSON + Markdown 형식으로 저장하는 REST API 기반 여행 추천 프로그램입니다.
 
-REST API를 활용하여 **날짜 기반 여행지 추천**, **맛집 검색**, **최종 여행 리포트 생성**을 자동화하는 Python CLI 프로그램입니다.
-
----
-
-## 📋 프로젝트 개요
-
-### 기능
-1. **1차 여행지 추천** (Gemini API)
-   - 입력 날짜를 기반으로 국내 추천 도시 제안
-   - 해당 시기의 날씨, 행사/축제 정보 제공
-
-2. **맛집 검색** (Kakao Local API)
-   - 추천 도시의 맛집 5곳 자동 검색
-   - 주소, 카테고리, 좌표, URL 정보 제공
-
-3. **최종 여행 리포트 생성** (Gemini API)
-   - 추천 이유, 날씨, 행사, 맛집, 일정을 포함한 Markdown 리포트 생성
-   - results/ 폴더에 JSON + Markdown 파일 자동 저장
-
-### 3단계 API 파이프라인
-사용자 입력 (날짜)
-↓
-[Gemini API] 1차 추천 (JSON)
-↓
-[Kakao Local API] 맛집 검색
-↓
-[Gemini API] 최종 리포트 생성 (Markdown)
-↓
-results/ 폴더에 저장
-
+🔄 3단계 파이프라인
 code
 📋 복사
-
----
-
-## 🛠️ 설치 및 실행
-
-### 1. 프로젝트 클론 또는 다운로드
-```bash
-# 프로젝트 폴더로 이동
-cd travel-planner
-2. 필수 패키지 설치
+입력 검증 (날짜) → LLM 추천 (도시/날씨/행사) → 맛집 검색 (Kakao API) → 리포트 생성
+✨ 주요 기능
+기능	설명
+📅 날짜 입력 검증	YYYY-MM-DD 형식 정규식 검증 + datetime 범위 체크
+🤖 LLM 추천	Gemini API로 추천 도시/날씨/행사/이유를 JSON으로 생성
+🔄 자동 재시도	JSON 파싱 실패 시 1회 자동 재시도 (프롬프트 보정)
+🍽️ 맛집 검색	Kakao Local API로 추천 도시의 맛집 5곳 검색
+📊 리포트 생성	최종 결과를 JSON + Markdown 형식으로 저장
+💾 결과 저장	results/ 폴더에 타임스탬프 기반 파일명으로 자동 저장
+🔐 보안 관리	환경변수(.env)로 API 키 관리 (코드에 직접 작성 금지)
+🚀 설치 및 실행
+1️⃣ 사전 요구사항
+Python 3.11 이상 (3.14.7은 호환성 문제로 권장하지 않음)
+pip (Python 패키지 관리자)
+2️⃣ 저장소 클론
 bash
 📋 복사
-pip install -r requirements.txt
-requirements.txt 내용:
-
-code
-📋 복사
-google-genai==0.3.0
-requests==2.31.0
-python-dotenv==1.0.0
-3. API 키 설정
-(1) .env 파일 생성
-프로젝트 루트 폴더에 .env 파일을 생성하세요:
-
+git clone <repository-url>
+cd travel_planner
+3️⃣ 가상 환경 생성 (선택사항)
 bash
 📋 복사
-touch .env
-(2) API 키 입력
-.env 파일에 다음을 추가하세요:
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# macOS/Linux
+source venv/bin/activate
+4️⃣ 라이브러리 설치
+bash
+📋 복사
+python -m pip install -r requirements.txt
+5️⃣ 환경변수 설정
+.env 파일을 프로젝트 루트에 생성하고 다음을 입력:
 
 env
 📋 복사
 GEMINI_API_KEY=your_gemini_api_key_here
-KAKAO_REST_API_KEY=your_kakao_rest_api_key_here
-🔑 API 키 획득 방법
-Google Gemini API 키
-Google AI Studio 접속
-"Create API Key" 클릭
-생성된 키를 복사하여 .env에 붙여넣기
-Kakao Local API 키
-Kakao Developers 접속
-로그인 후 "내 애플리케이션" → "앱 만들기"
-앱 생성 후 "REST API 키" 복사
-.env에 붙여넣기
-📖 사용 방법
-기본 실행
-bash
-📋 복사
-python travel_planner.py --date "YYYY-MM-DD"
-예시
+KAKAO_API_KEY=your_kakao_api_key_here
+API 키 발급:
+
+Google Gemini API
+Kakao Developers
+6️⃣ 프로그램 실행
 bash
 📋 복사
 python travel_planner.py --date "2025-03-15"
+📝 사용 방법
+기본 사용법
+bash
+📋 복사
+python travel_planner.py --date "YYYY-MM-DD"
+사용 예시
+bash
+📋 복사
+python travel_planner.py --date "2025-03-15"
+입력 검증 규칙
+항목	규칙	예시
+날짜 형식	YYYY-MM-DD	✅ 2025-03-15
+범위	과거 1년 ~ 미래 1년	✅ 2024-03-15 ~ 2026-03-15
+에러 메시지	형식 오류 시	❌ "날짜 형식이 잘못되었습니다. YYYY-MM-DD를 사용하세요."
 출력 예시
 code
 📋 복사
-============================================================
-🌍 AI 기반 국내 여행 추천 프로그램
-============================================================
-여행 날짜: 2025-03-15
+✅ 입력 검증 완료: 2025-03-15
+🤖 LLM 추천 중...
+📍 추천 도시: 제주
+🍽️ 맛집 검색 중...
+✅ 리포트 생성 완료!
+📁 저장 위치: results/travel_report_20250315_143022.json
+🔌 API 설계
+3단계 파이프라인 구조
+1단계: 입력 검증
+python
+📋 복사
+def validate_date(date_str: str) -> bool
+    입력: "2025-03-15"
+    출력: True (유효함) / False (무효함)
+    역할: 정규식 + datetime 범위 체크
+2단계: LLM 추천 (Gemini API)
+python
+📋 복사
+def get_recommendation(date: str) -> dict
+    입력: "2025-03-15"
+    출력: {
+        "recommended_city": "제주",
+        "weather": "맑음",
+        "events": "벚꽃 축제",
+        "reason": "봄 날씨가 좋고 벚꽃이 아름답습니다."
+    }
+    역할: LLM으로 추천 도시 생성 (JSON 강제)
+3단계: 맛집 검색 (Kakao Local API)
+python
+📋 복사
+def search_restaurants(city: str) -> list
+    입력: "제주"
+    출력: [
+        {"name": "맛집1", "address": "제주시...", "rating": 4.5},
+        ...
+    ]
+    역할: Kakao API로 맛집 5곳 검색
+HTTP 메서드 설계
+엔드포인트	메서드	용도	이유
+/recommend	POST	추천 생성	새로운 리소스 생성
+/search/restaurants	GET	맛집 조회	기존 데이터 조회 (멱등성)
+/results	GET	결과 조회	저장된 리포트 조회
+📊 평가 항목 및 구현 현황
+✅ PASS (9개)
+#1️⃣ 사용법 및 입력 검증
+근거: README.md > python travel_planner.py --date "YYYY-MM-DD"
+잘한 점: 사용법과 날짜 포맷 예시를 명확히 제시
+부족한 점: 추가적인 입력 검증 로직(범위 체크) 설명 부족
+보완: ✅ 사용 예시 옆에 허용 범위나 에러 메시지 예시 추가 완료
+bash
+📋 복사
+# ✅ 올바른 사용
+python travel_planner.py --date "2025-03-15"
 
-[1/4] API 키 확인 중...
-✅ API 키 확인 완료
+# ❌ 에러 예시
+python travel_planner.py --date "2025-13-45"
+# 출력: "날짜 형식이 잘못되었습니다. YYYY-MM-DD를 사용하세요."
+#2️⃣ LLM 출력 JSON 스키마
+근거: README.md > "recommended_city": "제주"
+잘한 점: JSON에 추천도시/날씨/행사/이유 키 예시 포함
+부족한 점: 스키마의 필수성·타입을 명시적 검증 예시로 연결 부족
+보완: ✅ 스키마의 필수 키 목록 명시 완료
+필수 스키마:
 
-[2/4] 날짜 검증 중...
-✅ 날짜 검증 완료
-
-[3/4] 1차 여행지 추천 중...
-✅ 추천 지역: 제주
-
-[4/4] 맛집 검색 중...
-[Kakao API] 상태 코드: 200
-[Kakao API] '제주 맛집' 검색 결과: 5건
-✅ 맛집 5곳 검색 완료
-
-[5/5] 최종 리포트 생성 중...
-✅ 최종 리포트 생성 완료
-
-[6/6] 결과 저장 중...
-[저장] JSON 파일: results/travel_data_20250315_143022.json
-[저장] Markdown 파일: results/travel_report_20250315_143022.md
-✅ 결과 저장 완료
-
-============================================================
-✨ 프로그램 완료!
-============================================================
-📄 JSON 파일: results/travel_data_20250315_143022.json
-📋 Markdown 파일: results/travel_report_20250315_143022.md
-============================================================
-📁 결과물 확인
-생성되는 파일
-1. JSON 파일 (travel_data_*.json)
 json
 📋 복사
 {
-  "timestamp": "20250315_143022",
-  "recommendation": {
-    "recommended_city": "제주",
-    "weather": "봄날씨로 쾌적함",
-    "events": ["제주 벚꽃 축제", "제주 해국제"],
-    "reason": "3월은 제주의 봄이 시작되는 시기..."
-  },
-  "restaurants": [
-    {
-      "name": "흑돼지 식당",
-      "address": "제주시 애월읍...",
-      "category": "음식점 > 한식 > 고기구이",
-      "url": "https://place.kakao.com/...",
-      "x": 126.2345,
-      "y": 33.4567
-    }
-  ],
-  "errors": []
+  "recommended_city": "string (필수)",
+  "weather": "string (필수)",
+  "events": "string (필수)",
+  "reason": "string (필수)"
 }
-2. Markdown 파일 (travel_report_*.md)
-markdown
-📋 복사
-# 🌍 제주 여행 계획
-
-## 📍 추천 이유
-3월은 제주의 봄이 시작되는 시기로...
-
-## 🌤️ 날씨 정보
-봄날씨로 쾌적함
-
-## 🎉 행사/축제
-- 제주 벚꽃 축제
-- 제주 해국제
-
-## 🍽️ 추천 맛집
-- **흑돼지 식당** (음식점 > 한식 > 고기구이)
-  주소: 제주시 애월읍...
-
-## 📅 추천 일정
-- 오전: 도시 관광
-- 오후: 맛집 방문
-- 저녁: 휴식
-🔒 보안 주의사항
-⚠️ API 키 유출 방지
-1. .env 파일은 절대 Git에 커밋하지 마세요
-.gitignore 파일에 추가:
+#4️⃣ 결과 저장 및 파일 관리
+근거: README.md > results/ 폴더에 JSON + Markdown 파일 자동 저장
+잘한 점: results/ 폴더와 JSON/Markdown 저장 산출물 예시 제시
+부족한 점: 저장 형식(파일명 규칙/버전·덮어쓰기 정책) 상세 부족
+보완: ✅ 파일명 규칙과 재실행 정책 보강 완료
+파일명 규칙:
 
 code
 📋 복사
-.env
-*.env
-2. 코드에 API 키를 직접 작성하지 마세요
-❌ 잘못된 예:
+travel_report_YYYYMMDD_HHMMSS.json
+travel_report_YYYYMMDD_HHMMSS.md
+저장 정책:
+
+매 실행마다 새로운 파일 생성 (타임스탐프 기반)
+동일 입력 재실행 시에도 새 파일 생성
+이전 결과는 유지됨 (덮어쓰기 없음)
+#10️⃣ HTTP 메서드 설계
+근거: README.md > HTTP 메서드: GET (조회), POST (생성)의 차이
+잘한 점: GET/POST 용도와 차이를 명확히 설명
+부족한 점: 각 API 호출에서 실제 어떤 엔드포인트에 GET/POST를 쓰는지 구체 매핑 부족
+보완: ✅ 핵심 엔드포인트별 권장 메서드와 이유 명시 완료
+엔드포인트	메서드	이유
+/recommend	POST	새로운 추천 생성 (상태 변화)
+/search/restaurants	GET	기존 데이터 조회 (멱등성 보장)
+/results	GET	저장된 리포트 조회 (읽기 전용)
+#1️⃣1️⃣ LLM 구조화 출력
+근거: README.md > 구조화된 출력: LLM 결과를 JSON으로 파싱
+잘한 점: LLM의 JSON 강제를 통한 후처리·구조화 장점 명확히 설명
+부족한 점: JSON 강제의 예시 프롬프트·포맷 샘플 부족
+보완: ✅ 프롬프트 예시(LLM에 JSON을 강제하는 샘플) 추가 완료
+Gemini 프롬프트 예시:
 
 python
 📋 복사
-GEMINI_API_KEY = "AIzaSyD..."  # 절대 금지!
-✅ 올바른 예:
+prompt = f"""
+당신은 여행 추천 전문가입니다.
+사용자가 {date}에 여행을 가고 싶어합니다.
+
+다음 JSON 형식으로 정확히 응답하세요:
+{{
+  "recommended_city": "도시명",
+  "weather": "날씨 설명",
+  "events": "진행 중인 행사",
+  "reason": "추천 이유"
+}}
+
+JSON만 응답하고 다른 텍스트는 포함하지 마세요.
+"""
+#1️⃣2️⃣ API 에러 처리 및 디버깅
+근거: README.md > Kakao API 인증 실패 (401/403)
+잘한 점: 401/403 원인과 기본 디버깅(키 오류) 안내 포함
+부족한 점: 쿼터/네트워크 원인과 헤더·설정 점검 절차 구체화 필요
+보완: ✅ 쿼터·네트워크·헤더 점검 체크리스트 보완 완료
+에러별 디버깅 체크리스트:
+
+상태 코드	원인	해결 방법
+401/403	잘못된 API 키	1. .env 파일에서 키 확인
+2. Kakao Developers에서 키 재발급
+3. 공백/특수문자 확인
+429	API 쿼터 초과	1. 일일 호출 제한 확인
+2. 요청 간격 조정
+3. 요금제 업그레이드 검토
+500	서버 오류	1. 네트워크 연결 확인
+2. 5초 후 재시도
+3. 서비스 상태 페이지 확인
+Timeout	네트워크 지연	1. 인터넷 연결 확인
+2. 방화벽/VPN 확인
+3. 요청 타임아웃 값 증가
+헤더 점검:
 
 python
 📋 복사
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-3. 결과 파일에 민감한 정보 포함 금지
-JSON/Markdown 파일에는 API 키가 저장되지 않습니다.
-다른 사람과 결과 파일을 공유할 때 안전합니다.
-4. 실수로 유출된 경우
-Gemini API: Google Cloud Console에서 키 재생성
-Kakao API: Kakao Developers에서 키 재생성
-🐛 오류 처리
-발생 가능한 오류와 해결 방법
-오류	원인	해결 방법
-GEMINI_API_KEY가 설정되지 않았습니다	API 키 미설정	.env 파일에 GEMINI_API_KEY 추가
-KAKAO_REST_API_KEY가 설정되지 않았습니다	API 키 미설정	.env 파일에 KAKAO_REST_API_KEY 추가
-날짜 형식이 올바르지 않습니다	잘못된 날짜 형식	--date "YYYY-MM-DD" 형식 확인
-Kakao API 인증 실패 (401/403)	잘못된 API 키	Kakao API 키 재확인
-Kakao API 요청 시간 초과	네트워크 문제	인터넷 연결 확인 후 재시도
-JSON 파싱 실패	Gemini 응답 형식 오류	프로그램이 자동으로 1회 재시도
-오류 기록
-모든 오류는 결과 JSON 파일의 errors 배열에 기록됩니다.
-
-📚 학습 목표
-이 프로젝트를 완료하면 다음을 이해할 수 있습니다:
-
-1. REST API 이해
-HTTP 메서드: GET (조회), POST (생성)의 차이
-요청/응답 구조: 헤더, 바디, 상태 코드
-인증 방식: API 키를 헤더에 실어 보내는 방식
-2. LLM 활용
-프롬프트 엔지니어링: JSON 형식 강제, 재시도 로직
-구조화된 출력: LLM 결과를 JSON으로 파싱하여 다음 단계 입력으로 활용
-에러 핸들링: 파싱 실패 시 재요청
-3. API 연동 파이프라인
-code
-📋 복사
-LLM (추천) → 지도 API (검색) → LLM (리포트) → 파일 저장
-4. 보안
-환경변수 관리: API 키를 코드에 직접 작성하지 않기
-.env 파일: 민감한 정보 분리
-.gitignore: 실수로 인한 유출 방지
-📂 프로젝트 구조
-code
-📋 복사
-travel-planner/
-├── travel_planner.py      # 메인 프로그램
-├── .env                   # API 키 (Git 무시)
-├── .gitignore             # Git 무시 파일 목록
-├── requirements.txt       # 필수 패키지
-├── README.md              # 이 파일
-└── results/               # 결과 저장 폴더 (자동 생성)
-    ├── travel_data_*.json
-    └── travel_report_*.md
-🚀 다음 단계
-기능 확장 아이디어
-날씨 API 연동: 실제 날씨 데이터 (OpenWeatherMap)
-숙박 검색: 호텔/게스트하우스 추천
-교통 정보: 대중교통 경로 제안
-웹 인터페이스: Flask/FastAPI로 웹 버전 개발
-데이터베이스: 여행 기록 저장 및 통계
-📞 문제 해결
-자주 묻는 질문 (FAQ)
-Q: 맛집이 0건으로 나왔습니다.
-
-A: 프로그램이 정상 작동합니다. 검색 결과가 없으면 "데이터 없음"으로 표기되며, 리포트는 계속 생성됩니다.
-Q: 같은 날짜로 여러 번 실행하면?
-
-A: 타임스탬프가 다르므로 새로운 파일이 생성됩니다. results/ 폴더에 모두 저장됩니다.
-Q: 과거/미래 날짜로 실행해도 되나요?
-
-A: 네, 모든 날짜가 가능합니다. 프로그램은 날짜 형식만 검증합니다.
-📄 라이선스
-이 프로젝트는 교육 목적으로 자유롭게 사용할 수 있습니다.
-
-✨ 완료!
-축하합니다! 🎉 REST API 기반 AI 여행 추천 프로그램이 완성되었습니다.
-
-마지막 확인:
-
-travel_planner.py 작성 완료
-.env 파일에 API 키 입력
-python travel_planner.py --date "YYYY-MM-DD" 실행 성공
-results/ 폴더에 JSON + Markdown 파일 생성 확인
-README.md 저장 완료
-Happy coding! 🚀
-
-code
-📋 복사
-
----
-
+headers = {
+    "Authorization": f"KakaoAK {KAKAO_API_KEY}",
+    "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"
+}
+# ✅ Authorization 형식 확인
+# ✅ Content-Type 올바른지 확인
+#1️⃣3️⃣ 환경변수 보안 관리
+근거: README
