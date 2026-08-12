@@ -147,6 +147,7 @@ def search_restaurants(city: str) -> list
     ]
     역할: Kakao API로 맛집 5곳 검색
 ```
+<img width="1458" height="368" alt="image" src="https://github.com/user-attachments/assets/65a3d7ef-96e1-408a-a02a-64f822097dca" />
 
 ### HTTP 메서드 설계
 
