@@ -59,7 +59,31 @@ def get_travel_recommendations(travel_date, errors_list):
     
     반드시 유효한 JSON만 응답하세요.
     """
-    
+
+    # API 호출 자체가 계속 실패했을 때도 프로그램이 죽지 않도록 쓸 fallback
+    fallback_recommendations = {
+        "recommendations": [
+            {
+                "city": "서울",
+                "reason": "수도로서 다양한 문화와 관광지 보유",
+                "attractions": ["경복궁", "남산타워", "명동"],
+                "estimated_cost": "50만원"
+            },
+            {
+                "city": "부산",
+                "reason": "해변 도시로 아름다운 해안 경관",
+                "attractions": ["해운대 해수욕장", "광안리", "감천문화마을"],
+                "estimated_cost": "60만원"
+            },
+            {
+                "city": "제주도",
+                "reason": "자연 경관이 뛰어난 관광지",
+                "attractions": ["한라산", "성산일출봉", "협재 해수욕장"],
+                "estimated_cost": "80만원"
+            }
+        ]
+    }
+
     max_retries = 3
     for attempt in range(max_retries):
         try:
@@ -86,37 +110,22 @@ def get_travel_recommendations(travel_date, errors_list):
             error_msg = f"[시도 {attempt + 1}/{max_retries}] JSON 파싱 오류: {str(e)}"
             errors_list.append(error_msg)
             print(f"⚠️  {error_msg}")
-            
+
             if attempt == max_retries - 1:
-                return {
-                    "recommendations": [
-                        {
-                            "city": "서울",
-                            "reason": "수도로서 다양한 문화와 관광지 보유",
-                            "attractions": ["경복궁", "남산타워", "명동"],
-                            "estimated_cost": "50만원"
-                        },
-                        {
-                            "city": "부산",
-                            "reason": "해변 도시로 아름다운 해안 경관",
-                            "attractions": ["해운대 해수욕장", "광안리", "감천문화마을"],
-                            "estimated_cost": "60만원"
-                        },
-                        {
-                            "city": "제주도",
-                            "reason": "자연 경관이 뛰어난 관광지",
-                            "attractions": ["한라산", "성산일출봉", "협재 해수욕장"],
-                            "estimated_cost": "80만원"
-                        }
-                    ]
-                }, errors_list
-        
+                return fallback_recommendations, errors_list
+
         except Exception as e:
             error_msg = f"[시도 {attempt + 1}/{max_retries}] Gemini API 오류: {str(e)}"
             errors_list.append(error_msg)
             print(f"⚠️  {error_msg}")
-    
-    return None, errors_list
+
+            # 마지막 시도까지 API 호출 자체가 실패한 경우에도
+            # None을 반환하지 않고 fallback을 반환해 이후 로직이 안전하게 동작하도록 함
+            if attempt == max_retries - 1:
+                return fallback_recommendations, errors_list
+
+    # 이론상 여기까지 오지 않지만, 방어적으로 fallback 반환
+    return fallback_recommendations, errors_list
 
 
 def search_kakao_place(query):
@@ -152,19 +161,27 @@ def search_kakao_place(query):
 
 def generate_travel_report(recommendations, restaurants):
     """최종 여행 리포트 생성"""
+    # recommendations가 None이거나 예상한 형태가 아닐 경우를 방어
+    if not recommendations or not isinstance(recommendations, dict):
+        recommendations = {"recommendations": []}
+
     report = "# 🌍 AI 기반 국내 여행 추천 리포트\n\n"
     report += f"**생성 날짜:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
     
     report += "## 📍 추천 여행지\n\n"
-    
-    for i, rec in enumerate(recommendations.get("recommendations", []), 1):
-        report += f"### {i}. {rec['city']}\n"
-        report += f"**추천 이유:** {rec['reason']}\n\n"
-        report += f"**주요 관광지:**\n"
-        for attraction in rec.get("attractions", []):
-            report += f"- {attraction}\n"
-        report += f"\n**예상 비용:** {rec.get('estimated_cost', '정보 없음')}\n\n"
-    
+
+    rec_list = recommendations.get("recommendations", [])
+    if rec_list:
+        for i, rec in enumerate(rec_list, 1):
+            report += f"### {i}. {rec['city']}\n"
+            report += f"**추천 이유:** {rec['reason']}\n\n"
+            report += f"**주요 관광지:**\n"
+            for attraction in rec.get("attractions", []):
+                report += f"- {attraction}\n"
+            report += f"\n**예상 비용:** {rec.get('estimated_cost', '정보 없음')}\n\n"
+    else:
+        report += "여행지 추천 정보를 가져오지 못했습니다.\n\n"
+
     report += "## 🍽️ 추천 맛집\n\n"
     
     if restaurants:
@@ -190,7 +207,7 @@ def save_results(recommendations, restaurants, errors_list, travel_date):
     json_filename = os.path.join(RESULTS_DIR, f"travel_data_{timestamp}.json")
     json_data = {
         "travel_date": travel_date,
-        "recommendations": recommendations.get("recommendations", []),
+        "recommendations": recommendations,
         "restaurants": restaurants,
         "errors": errors_list,
         "generated_at": datetime.now().isoformat()
@@ -253,10 +270,16 @@ def main():
     
     # [4/4] 맛집 검색
     print("[4/4] 맛집 검색 중...")
-    query = f"{recommendations['recommendations'][0]['city']} 맛집"
+    if recommendations and recommendations.get("recommendations"):
+        city = recommendations["recommendations"][0].get("city", "서울")
+    else:
+        city = "서울"
+
+    query = f"{city} 맛집"
     restaurants = search_kakao_place(query)
     if restaurants:
         print(f"✅ {len(restaurants)}개 맛집 검색 완료")
+    print()
     print()
     
     # 결과 저장
